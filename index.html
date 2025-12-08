@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel 離線轉檔工具</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 980px;
+            margin: 32px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.7rem;
+            font-weight: 600;
+        }
+        h2 {
+            margin-top: 28px;
+            font-size: 1.25rem;
+        }
+        button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-right: 10px;
+            margin-top: 12px;
+        }
+        .primary { background: #2563eb; color: #fff; }
+        .secondary { background: #10b981; color: #fff; }
+        .accent { background: #d97706; color: #fff; }
+        button:disabled { background: #9ca3af !important; cursor: not-allowed; }
+        #log {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            white-space: pre-line;
+        }
+        .note {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Excel 離線轉檔工具</h1>
+    <p>本工具完全在瀏覽器本機運作，不會上傳任何資料。</p>
+
+    <h2>1️⃣ 上傳 Excel 檔案</h2>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+
+    <h2>2️⃣ 選擇工作表</h2>
+    <select id="sheetSelect" disabled>
+        <option value="">尚未載入</option>
+    </select>
+
+    <h2>3️⃣ 選擇功能</h2>
+
+    <button id="btnFilterCustomer" class="primary" disabled>
+        OMS轉MOMO匯入檔
+    </button>
+    <div class="note">篩選MOMO訂單資料，輸出ERP固定格式。</div>
+
+    <button id="btnMomoSpecial" class="accent" disabled>
+        OMS轉Shopee&Yahoo匯入檔
+    </button>
+    <div class="note">篩選Shopee&Yahoo訂單資料，輸出ERP固定格式。</div>
+
+    <button id="btnVBAExport" class="secondary" disabled>
+        OMS轉ERP轉播格式
+    </button>
+    <div class="note">將OMS格式轉ERP轉播單格式。</div>
+
+    
+
+    <div id="log"></div>
+</div>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+(function(){
+    const fileInput = document.getElementById("fileInput");
+    const sheetSelect = document.getElementById("sheetSelect");
+    const btnFilterCustomer = document.getElementById("btnFilterCustomer");
+    const btnVBAExport = document.getElementById("btnVBAExport");
+    const btnMomoSpecial = document.getElementById("btnMomoSpecial");
+    const log = document.getElementById("log");
+
+    let workbook = null;
+    let originalFileName = "";
+
+    function setLog(msg){ log.textContent = msg; }
+
+    function getBaseName(name){ return name.replace(/\.[^.]+$/, ""); }
+
+    function getSelectedSheet(){
+        if(!workbook){ setLog("尚未載入活頁簿。"); return null; }
+        const sheetName = sheetSelect.value;
+        if(!sheetName){ setLog("請先選擇工作表。"); return null; }
+        return { sheetName, sheet: workbook.Sheets[sheetName] };
+    }
+
+    // ========== 載入 Excel ==========
+    fileInput.addEventListener("change", function(){
+        const file = fileInput.files[0];
+        if(!file){
+            workbook = null;
+            sheetSelect.innerHTML = "<option>尚未載入</option>";
+            sheetSelect.disabled = true;
+            btnFilterCustomer.disabled = btnVBAExport.disabled = btnMomoSpecial.disabled = true;
+            return;
+        }
+
+        setLog("讀取中…");
+
+        const reader = new FileReader();
+        reader.onload = function(e){
+            try {
+                workbook = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+                originalFileName = file.name;
+
+                sheetSelect.innerHTML = "";
+                workbook.SheetNames.forEach((n,i)=>{
+                    const opt = document.createElement("option");
+                    opt.value = opt.textContent = n;
+                    if(i===0) opt.selected = true;
+                    sheetSelect.appendChild(opt);
+                });
+
+                sheetSelect.disabled = false;
+                btnFilterCustomer.disabled = btnVBAExport.disabled = btnMomoSpecial.disabled = false;
+
+                setLog(`已載入 ${file.name}\n共有 ${workbook.SheetNames.length} 個工作表。`);
+            } catch(err){
+                console.error(err);
+                setLog("讀取活頁簿錯誤：" + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 小工具
+    function val(row, idx){ return row[idx] !== undefined ? String(row[idx]).trim() : ""; }
+
+    // ======================================================
+    // 功能一：27365925 篩選輸出（你已完成版）
+    // ======================================================
+    btnFilterCustomer.addEventListener("click", function(){
+        const sel = getSelectedSheet();
+        if(!sel) return;
+        const { sheetName, sheet } = sel;
+
+        setLog("功能一處理中…");
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const data = rows.slice(1);
+
+        const target = ["27365925", "27365925DS"];
+
+        const out = [
+            ["銷貨日期","客戶代號(固定)","部門代號(固定)","通路訂單編號","備註","品號","數量","金額",
+             "通路訂單序號(不填)","庫別","發票地址一(固定)","客戶全名(固定)"]
+        ];
+
+        data.forEach(row=>{
+            const cust = val(row,16);
+            if(target.includes(cust)){
+                out.push([
+                    "",
+                    cust,
+                    val(row,17),
+                    val(row,11),
+                    val(row,3),
+                    val(row,9),
+                    val(row,13),
+                    val(row,15),
+                    "",
+                    val(row,20),
+                    val(row,19),
+                    val(row,18)
+                ]);
+            }
+        });
+
+        const outSheet = XLSX.utils.aoa_to_sheet(out);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, outSheet, "轉換後");
+
+        XLSX.writeFile(wb, "MOMO匯入_" + getBaseName(originalFileName) + ".xlsx");
+
+        setLog("功能一完成！");
+    });
+
+    // ======================================================
+    // 功能二：轉播單（ERP 格式）→ 你 Office Script 版本
+    // ======================================================
+    btnVBAExport.addEventListener("click", function(){
+
+        const sel = getSelectedSheet();
+        if(!sel) return;
+        const { sheetName, sheet } = sel;
+
+        setLog("功能二處理中…");
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const header = rows[0];
+        const data = rows.slice(1);
+        const n = data.length;
+
+        function findCol(keyword){
+            keyword = keyword.replace(/ /g,"");
+            for(let i=0;i<header.length;i++){
+                let h = String(header[i]||"").replace(/[\n ]/g,"");
+                if(h.includes(keyword)) return i+1;
+            }
+            return 0;
+        }
+
+        const cDate = findCol("撥出日期");
+        const cNo = findCol("單號");
+        const cWHOut = findCol("撥出倉庫");
+        const cWHIn = findCol("撥入倉庫");
+        const cItem = findCol("商品代號");
+        const cName = findCol("商品名稱");
+        const cQty = findCol("撥出數量");
+
+        const aoa = [];
+        const maxCol = 79;
+        const title = new Array(maxCol).fill("");
+
+        const COL = {
+            單別: 2, 單號: 3, 部門代號: 5, 備註: 6,
+            廠別代號: 9, 單據日期: 15, 確認者: 16, 簽核狀態碼: 18,
+            運輸方式: 21, BN單別: 66, BP序號: 68, 品號: 69,
+            品名: 70, 數量: 72, 單位: 73, 轉出庫: 78, 轉入庫: 79
+        };
+
+        title[COL.單別-1]="單別";
+        title[COL.單號-1]="單號";
+        title[COL.部門代號-1]="部門代號";
+        title[COL.備註-1]="備註";
+        title[COL.廠別代號-1]="廠別代號";
+        title[COL.單據日期-1]="單據日期";
+        title[COL.確認者-1]="確認者";
+        title[COL.簽核狀態碼-1]="簽核狀態碼";
+        title[COL.運輸方式-1]="運輸方式";
+        title[COL.BN單別-1]="單別";
+        title[COL.BP序號-1]="序號";
+        title[COL.品號-1]="品號";
+        title[COL.品名-1]="品名";
+        title[COL.數量-1]="數量";
+        title[COL.單位-1]="單位";
+        title[COL.轉出庫-1]="轉出庫";
+        title[COL.轉入庫-1]="轉入庫";
+
+        aoa.push(title);
+
+        let serial = 1;
+        for(let i=0;i<n;i++){
+            const row = data[i];
+            if(val(row,cItem-1)==="") continue;
+
+            const newRow = new Array(maxCol).fill("");
+
+            newRow[COL.單別-1] = "122";
+            newRow[COL.部門代號-1] = "6999";
+            newRow[COL.廠別代號-1] = "001";
+            newRow[COL.確認者-1] = "E11075";
+            newRow[COL.簽核狀態碼-1] = "N";
+            newRow[COL.運輸方式-1] = "5";
+
+            newRow[COL.單據日期-1] = row[cDate-1];
+            newRow[COL.備註-1] = row[cNo-1];
+            newRow[COL.品號-1] = row[cItem-1];
+            newRow[COL.品名-1] = row[cName-1];
+            newRow[COL.數量-1] = row[cQty-1];
+            newRow[COL.轉出庫-1] = row[cWHOut-1];
+            newRow[COL.轉入庫-1] = row[cWHIn-1];
+
+            newRow[COL.BN單別-1] = "122";
+            newRow[COL.BP序號-1] = serial++;
+
+            aoa.push(newRow);
+        }
+
+        const out = XLSX.utils.aoa_to_sheet(aoa);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, out, "轉播單");
+
+        XLSX.writeFile(wb, "轉播單_" + getBaseName(originalFileName) + ".xlsx");
+
+        setLog("功能二完成！");
+    });
+
+    // ======================================================
+    // 功能三：外站（MOMO / YAHOO / SHOPEE）→ Python 等效版
+    // ======================================================
+    btnMomoSpecial.addEventListener("click", function(){
+        const sel = getSelectedSheet();
+        if(!sel) return;
+        const { sheetName, sheet } = sel;
+
+        setLog("功能三處理中…");
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const data = rows.slice(1);
+
+        const target = ["56801904A","56801904D","27240313A","54880333"];
+
+        let raw = data
+            .filter(r => target.includes(val(r,16)))
+            .map(r => {
+                let cust = val(r,16);
+
+                let orderNo =
+                    ["56801904A","56801904D","54880333"].includes(cust)
+                    ? val(r,4)
+                    : val(r,11);
+
+                let pn = val(r,9);
+                if(pn==="seller_discount") pn="100004-000-000";
+                if(pn==="SHIPFEE") pn="100001-000-000";
+                if(["platform_coin","Discount"].includes(pn)) return null;
+
+                return {
+                    銷貨日期: "",
+                    客戶代號: val(r,16),
+                    部門代號: val(r,17),
+                    通路訂單編號: orderNo,
+                    備註: val(r,3),
+                    品號: pn,
+                    數量: val(r,13),
+                    金額: val(r,15),
+                    庫別: val(r,20),
+                    發票地址: val(r,19),
+                    客戶全名: val(r,18),
+                    序號: 0
+                };
+            })
+            .filter(Boolean);
+
+        // 產生 cumcount
+        let groups = {};
+        raw.forEach(r=>{
+            const key = r.通路訂單編號 + "|||" + r.備註;
+            if(!groups[key]) groups[key] = 0;
+            groups[key]++;
+            r.序號 = groups[key];
+        });
+
+        raw.sort((a,b)=>{
+            if(a.通路訂單編號 < b.通路訂單編號) return -1;
+            if(a.通路訂單編號 > b.通路訂單編號) return 1;
+            return a.序號 - b.序號;
+        });
+
+        const out = [
+            ["銷貨日期","客戶代號(固定)","部門代號(固定)","通路訂單編號",
+             "備註","品號","數量","金額","通路訂單序號(要填)",
+             "庫別","發票地址一(固定)","客戶全名(固定)"]
+        ];
+
+        raw.forEach(r=>{
+            out.push([
+                "",
+                r.客戶代號,
+                r.部門代號,
+                r.通路訂單編號,
+                r.備註,
+                r.品號,
+                r.數量,
+                r.金額,
+                r.序號,
+                r.庫別,
+                r.發票地址,
+                r.客戶全名
+            ]);
+        });
+
+        const sheetOut = XLSX.utils.aoa_to_sheet(out);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, sheetOut, "外站轉檔");
+
+        XLSX.writeFile(wb, "Shopee&Yahoo匯入_" + getBaseName(originalFileName) + ".xlsx");
+
+        setLog("功能三完成！總筆數：" + raw.length);
+    });
+
+})();
+</script>
+
+</body>
+</html>
