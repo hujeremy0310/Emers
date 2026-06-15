@@ -1,9 +1,5 @@
 (function () {
-  const originalRender = render;
-
-  render = function () {
-    originalRender();
-
+  function applyTooltipValueFix() {
     Object.values(state.charts).forEach((chartInstance) => {
       chartInstance.options.plugins.tooltip.callbacks.label = (context) => {
         const value = context.dataset.data[context.dataIndex] ?? 0;
@@ -12,7 +8,13 @@
       };
       chartInstance.update();
     });
+  }
+
+  const originalChart = chart;
+  chart = function (...args) {
+    originalChart(...args);
+    applyTooltipValueFix();
   };
 
-  if (state.all.length) render();
+  if (state.all.length) applyTooltipValueFix();
 })();
