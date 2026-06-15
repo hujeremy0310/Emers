@@ -265,8 +265,11 @@ function chart(id, type, config) {
         tooltip: {
           callbacks: {
             label: (ctx) => {
-              const value = Array.isArray(ctx.parsed) ? ctx.parsed[0] : ctx.parsed.y ?? ctx.parsed.x ?? ctx.raw;
-              return `${ctx.dataset.label || ctx.label}: ${number(value)}`;
+              const value = ctx.chart.options.indexAxis === "y"
+                ? ctx.parsed.x
+                : Array.isArray(ctx.parsed) ? ctx.parsed[0] : ctx.parsed.y ?? ctx.parsed.x ?? ctx.raw;
+              const prefix = String(ctx.dataset.label || "").includes("Sales") ? "NT$" : "";
+              return `${ctx.dataset.label || ctx.label}: ${prefix}${money(value)}`;
             },
           },
         },
