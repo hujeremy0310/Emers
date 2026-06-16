@@ -11,76 +11,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <strong>Sales Performance</strong>
-      <span>Retail Dashboard</span>
-    </div>
-    <div class="status">
-      <span class="dot"></span>
-      <span id="statusText">Loading data</span>
-      <button class="btn" id="refreshBtn" type="button">Refresh Data</button>
-      <button class="btn" id="resetBtn" type="button">Reset Filters</button>
-    </div>
-  </header>
-
-  <section class="filters" aria-label="Dashboard filters">
-    <label class="field"><span>Period</span><select id="periodFilter"></select></label>
-    <label class="field"><span>Brand</span><select id="brandFilter"></select></label>
-    <label class="field"><span>Category</span><select id="categoryFilter"></select></label>
-    <label class="field"><span>Channel</span><select id="channelFilter"></select></label>
-    <label class="field"><span>Country</span><select id="countryFilter"></select></label>
-    <label class="field"><span>Related Transfer</span><select id="transferFilter"></select></label>
-    <label class="search"><span>Search</span><input id="searchInput" type="search" placeholder="customer / product"></label>
-  </section>
-
+  <header class="topbar"><div class="brand"><strong>Sales Performance</strong><span>Retail Dashboard</span></div><div class="status"><span class="dot"></span><span id="statusText">Loading data</span><button class="btn" id="refreshBtn" type="button">Refresh Data</button><button class="btn" id="resetBtn" type="button">Reset Filters</button></div></header>
+  <section class="filters" aria-label="Dashboard filters"><label class="field"><span>Period</span><select id="periodFilter"></select></label><label class="field"><span>Brand</span><select id="brandFilter"></select></label><label class="field"><span>Category</span><select id="categoryFilter"></select></label><label class="field"><span>Channel</span><select id="channelFilter"></select></label><label class="field"><span>Country</span><select id="countryFilter"></select></label><label class="field"><span>Related Transfer</span><select id="transferFilter"></select></label><label class="search"><span>Search</span><input id="searchInput" type="search" placeholder="customer / product"></label></section>
   <main>
-    <section class="hero">
-      <div><p class="eyebrow">NTD Sales</p><h1 id="heroSales">-</h1><p id="heroNote">Full raw data loaded from the Google Sheet export.</p></div>
-      <div class="heroStats"><div><span>Rows</span><strong id="rowCount">-</strong></div><div><span>Qty</span><strong id="totalQty">-</strong></div><div><span>Avg / Row</span><strong id="avgOrder">-</strong></div></div>
-    </section>
-
-    <section class="kpis">
-      <article class="kcard"><span>Total Customers</span><strong id="customerCount">-</strong><small>unique filtered customers</small></article>
-      <article class="kcard"><span>Brands</span><strong id="brandCount">-</strong><small>active brands</small></article>
-      <article class="kcard"><span>Products</span><strong id="productCount">-</strong><small>unique product codes</small></article>
-      <article class="kcard"><span>Top Share</span><strong id="topShare">-</strong><small id="topShareLabel">largest brand share</small></article>
-    </section>
-
-    <section class="grid mainGrid">
-      <article class="panel wide"><div class="panelHead"><div><h2>Monthly Sales Trend</h2><p>NTD amount and quantity by month</p></div></div><div class="chartBox"><canvas id="trendChart"></canvas></div></article>
-      <article class="panel"><div class="panelHead"><div><h2>Channel Mix</h2><p>share of filtered sales by channel</p></div></div><div class="chartBox"><canvas id="categoryChart"></canvas></div></article>
-    </section>
-
-    <section class="panel yoyPanel">
-      <div class="panelHead"><div><h2>YoY Analysis</h2><p id="yoyNote">current filtered sales vs last year same month range</p></div></div>
-      <div class="yoyCards">
-        <div><span>Current Sales</span><strong id="yoyCurrent">-</strong></div>
-        <div><span>Last Year Comparable</span><strong id="yoyPrior">-</strong></div>
-        <div><span>YoY Growth</span><strong id="yoyGrowth">-</strong></div>
-        <div><span>Sales Difference</span><strong id="yoyDelta">-</strong></div>
-      </div>
-      <div class="chartBox"><canvas id="yoyChart"></canvas></div>
-    </section>
-
-    <section class="grid">
-      <article class="panel"><div class="panelHead"><div><h2>Top Brands</h2><p>ranked by NTD sales</p></div></div><div class="chartBox"><canvas id="brandChart"></canvas></div></article>
-      <article class="panel"><div class="panelHead"><div><h2>Channel Performance</h2><p>channel sales distribution</p></div></div><div class="chartBox"><canvas id="channelChart"></canvas></div></article>
-    </section>
-
-    <section class="grid tableGrid">
-      <article class="panel"><div class="panelHead"><div><h2>Top Customers</h2><p>best accounts in current filter</p></div></div><div class="rankList" id="customerRank"></div></article>
-      <article class="panel"><div class="panelHead"><div><h2>Product Leaders</h2><p>top products by sales</p></div></div><div class="tableWrap"><table><thead><tr><th>Product</th><th>Brand</th><th>Sales</th><th>Qty</th></tr></thead><tbody id="productRows"></tbody></table></div></article>
-    </section>
-
-    <section class="panel dataPanel">
-      <div class="panelHead"><div><h2>Filtered Detail</h2><p id="detailNote">showing latest filtered rows</p></div><button class="btn pri" id="downloadBtn" type="button">Export CSV</button></div>
-      <div class="tableWrap"><table><thead><tr><th>Period</th><th>Customer</th><th>Brand</th><th>Category</th><th>Country</th><th>Channel</th><th>Transfer</th><th>Product</th><th>Qty</th><th>NTD Sales</th></tr></thead><tbody id="detailRows"></tbody></table></div>
-    </section>
+    <section class="hero"><div><p class="eyebrow">NTD Sales</p><h1 id="heroSales">-</h1><p id="heroNote">Full raw data loaded from the Google Sheet export.</p></div><div class="heroStats"><div><span>Rows</span><strong id="rowCount">-</strong></div><div><span>Qty</span><strong id="totalQty">-</strong></div><div><span>Avg / Row</span><strong id="avgOrder">-</strong></div></div></section>
+    <section class="kpis"><article class="kcard"><span>Total Customers</span><strong id="customerCount">-</strong><small>unique filtered customers</small></article><article class="kcard"><span>Brands</span><strong id="brandCount">-</strong><small>active brands</small></article><article class="kcard"><span>Products</span><strong id="productCount">-</strong><small>unique product codes</small></article><article class="kcard"><span>Top Share</span><strong id="topShare">-</strong><small id="topShareLabel">largest brand share</small></article></section>
+    <section class="grid mainGrid"><article class="panel wide"><div class="panelHead"><div><h2>Monthly Sales Trend</h2><p>NTD amount and quantity by month</p></div></div><div class="chartBox"><canvas id="trendChart"></canvas></div></article><article class="panel"><div class="panelHead"><div><h2>Channel Mix</h2><p>share of filtered sales by channel</p></div></div><div class="chartBox"><canvas id="categoryChart"></canvas></div></article></section>
+    <section class="panel yoyPanel"><div class="panelHead"><div><h2>YoY Analysis</h2><p id="yoyNote">current filtered sales vs last year same month range</p></div></div><div class="yoyCards"><div><span>Current Sales</span><strong id="yoyCurrent">-</strong></div><div><span>Last Year Comparable</span><strong id="yoyPrior">-</strong></div><div><span>YoY Growth</span><strong id="yoyGrowth">-</strong></div><div><span>Sales Difference</span><strong id="yoyDelta">-</strong></div></div><div class="chartBox"><canvas id="yoyChart"></canvas></div></section>
+    <section class="grid"><article class="panel"><div class="panelHead"><div><h2>Top Brands</h2><p>ranked by NTD sales</p></div></div><div class="chartBox"><canvas id="brandChart"></canvas></div></article><article class="panel"><div class="panelHead"><div><h2>Channel Performance</h2><p>channel sales distribution</p></div></div><div class="chartBox"><canvas id="channelChart"></canvas></div></article></section>
+    <section class="grid tableGrid"><article class="panel"><div class="panelHead"><div><h2>Top Customers</h2><p>best accounts in current filter</p></div></div><div class="rankList" id="customerRank"></div></article><article class="panel"><div class="panelHead"><div><h2>Product Leaders</h2><p>top products by sales</p></div></div><div class="tableWrap"><table><thead><tr><th>Product</th><th>Brand</th><th>Sales</th><th>Qty</th></tr></thead><tbody id="productRows"></tbody></table></div></article></section>
+    <section class="panel dataPanel"><div class="panelHead"><div><h2>Filtered Detail</h2><p id="detailNote">showing latest filtered rows</p></div><button class="btn pri" id="downloadBtn" type="button">Export CSV</button></div><div class="tableWrap"><table><thead><tr><th>Period</th><th>Customer</th><th>Brand</th><th>Category</th><th>Country</th><th>Channel</th><th>Transfer</th><th>Product</th><th>Qty</th><th>NTD Sales</th></tr></thead><tbody id="detailRows"></tbody></table></div></section>
   </main>
-
   <script src="app.js"></script>
   <script src="tooltip-value-fix.js"></script>
-  <script src="yoy-analysis.js"></script>
+  <script src="yoy-analysis.js?v=20260616-month-labels"></script>
 </body>
 </html>
