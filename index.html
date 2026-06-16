@@ -101,98 +101,63 @@
       </article>
     </section>
 
+    <section class="panel yoyPanel">
+      <div class="panelHead">
+        <div>
+          <h2>YoY Analysis</h2>
+          <p id="yoyNote">current filtered sales vs last year same month range</p>
+        </div>
+      </div>
+      <div class="yoyCards">
+        <div><span>Current Sales</span><strong id="yoyCurrent">-</strong></div>
+        <div><span>Last Year Comparable</span><strong id="yoyPrior">-</strong></div>
+        <div><span>YoY Growth</span><strong id="yoyGrowth">-</strong></div>
+        <div><span>Sales Difference</span><strong id="yoyDelta">-</strong></div>
+      </div>
+      <div class="chartBox"><canvas id="yoyChart"></canvas></div>
+    </section>
+
     <section class="grid mainGrid">
       <article class="panel wide">
-        <div class="panelHead">
-          <div>
-            <h2>Monthly Sales Trend</h2>
-            <p>NTD amount and quantity by month</p>
-          </div>
-        </div>
+        <div class="panelHead"><div><h2>Monthly Sales Trend</h2><p>NTD amount and quantity by month</p></div></div>
         <div class="chartBox"><canvas id="trendChart"></canvas></div>
       </article>
       <article class="panel">
-        <div class="panelHead">
-          <div>
-            <h2>Channel Mix</h2>
-            <p>share of filtered sales by channel</p>
-          </div>
-        </div>
+        <div class="panelHead"><div><h2>Channel Mix</h2><p>share of filtered sales by channel</p></div></div>
         <div class="chartBox"><canvas id="categoryChart"></canvas></div>
       </article>
     </section>
 
     <section class="grid">
       <article class="panel">
-        <div class="panelHead">
-          <div>
-            <h2>Top Brands</h2>
-            <p>ranked by NTD sales</p>
-          </div>
-        </div>
+        <div class="panelHead"><div><h2>Top Brands</h2><p>ranked by NTD sales</p></div></div>
         <div class="chartBox"><canvas id="brandChart"></canvas></div>
       </article>
       <article class="panel">
-        <div class="panelHead">
-          <div>
-            <h2>Channel Performance</h2>
-            <p>channel sales distribution</p>
-          </div>
-        </div>
+        <div class="panelHead"><div><h2>Channel Performance</h2><p>channel sales distribution</p></div></div>
         <div class="chartBox"><canvas id="channelChart"></canvas></div>
       </article>
     </section>
 
     <section class="grid tableGrid">
       <article class="panel">
-        <div class="panelHead">
-          <div>
-            <h2>Top Customers</h2>
-            <p>best accounts in current filter</p>
-          </div>
-        </div>
+        <div class="panelHead"><div><h2>Top Customers</h2><p>best accounts in current filter</p></div></div>
         <div class="rankList" id="customerRank"></div>
       </article>
       <article class="panel">
-        <div class="panelHead">
-          <div>
-            <h2>Product Leaders</h2>
-            <p>top products by sales</p>
-          </div>
-        </div>
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr><th>Product</th><th>Brand</th><th>Sales</th><th>Qty</th></tr>
-            </thead>
-            <tbody id="productRows"></tbody>
-          </table>
-        </div>
+        <div class="panelHead"><div><h2>Product Leaders</h2><p>top products by sales</p></div></div>
+        <div class="tableWrap"><table><thead><tr><th>Product</th><th>Brand</th><th>Sales</th><th>Qty</th></tr></thead><tbody id="productRows"></tbody></table></div>
       </article>
     </section>
 
     <section class="panel dataPanel">
-      <div class="panelHead">
-        <div>
-          <h2>Filtered Detail</h2>
-          <p id="detailNote">showing latest filtered rows</p>
-        </div>
-        <button class="btn pri" id="downloadBtn" type="button">Export CSV</button>
-      </div>
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Period</th><th>Customer</th><th>Brand</th><th>Category</th><th>Country</th><th>Channel</th><th>Transfer</th><th>Product</th><th>Qty</th><th>NTD Sales</th>
-            </tr>
-          </thead>
-          <tbody id="detailRows"></tbody>
-        </table>
-      </div>
+      <div class="panelHead"><div><h2>Filtered Detail</h2><p id="detailNote">showing latest filtered rows</p></div><button class="btn pri" id="downloadBtn" type="button">Export CSV</button></div>
+      <div class="tableWrap"><table><thead><tr><th>Period</th><th>Customer</th><th>Brand</th><th>Category</th><th>Country</th><th>Channel</th><th>Transfer</th><th>Product</th><th>Qty</th><th>NTD Sales</th></tr></thead><tbody id="detailRows"></tbody></table></div>
     </section>
   </main>
 
   <script src="app.js"></script>
   <script src="tooltip-value-fix.js"></script>
+  <script src="yoy-analysis.js"></script>
 </body>
 </html>
