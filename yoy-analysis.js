@@ -145,11 +145,17 @@
     const monthLabels = Array.from({ length: 12 }, (_, index) => index + 1);
     const currentByMonth = new Map(groupBy(currentRows, "month").map((item) => [Number(item.label), item.amount]));
     const priorByMonth = new Map(groupBy(priorFiltered, "month").map((item) => [Number(item.label), item.amount]));
+    const growthByMonth = monthLabels.map((month) => {
+      const currentMonthAmount = currentByMonth.get(month) || 0;
+      const priorMonthAmount = priorByMonth.get(month) || 0;
+      return priorMonthAmount ? ((currentMonthAmount - priorMonthAmount) / priorMonthAmount) * 100 : null;
+    });
+    const monthNames = monthLabels.map((month) => `${month}\u6708`);
 
     chart("yoyChart", "bar", {
       legend: true,
       data: {
-        labels: monthLabels.map((month) => `${month}\u6708`),
+        labels: monthNames,
         datasets: [
           { label: "Current Sales", data: monthLabels.map((month) => currentByMonth.get(month) || 0), backgroundColor: "#2f80ed", borderRadius: 4 },
           { label: "Last Year Sales", data: monthLabels.map((month) => priorByMonth.get(month) || 0), backgroundColor: "#94a3b8", borderRadius: 4 },
@@ -157,6 +163,24 @@
       },
       scales: {
         y: { ticks: { callback: money }, grid: { color: "#eef2f7" } },
+        x: { grid: { display: false } },
+      },
+    });
+
+    chart("yoyGrowthChart", "bar", {
+      data: {
+        labels: monthNames,
+        datasets: [
+          {
+            label: "YoY Growth %",
+            data: growthByMonth,
+            backgroundColor: growthByMonth.map((value) => value === null ? "#cbd5e1" : value >= 0 ? "#059669" : "#dc2626"),
+            borderRadius: 4,
+          },
+        ],
+      },
+      scales: {
+        y: { ticks: { callback: (value) => `${value}%` }, grid: { color: "#eef2f7" } },
         x: { grid: { display: false } },
       },
     });
