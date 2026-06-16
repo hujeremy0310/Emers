@@ -49,18 +49,48 @@
   function loadPriorRows() {
     return new Promise((resolve, reject) => {
       const callbackName = `__yoyPrior_${Date.now()}_${Math.round(Math.random() * 100000)}`;
-      const params = new URLSearchParams({ gid: PRIOR_GID, tq: QUERY, tqx: `out:json;responseHandler:${callbackName}`, cacheBust: String(Date.now()) });
+      const params = new URLSearchParams({
+        gid: PRIOR_GID,
+        tq: QUERY,
+        tqx: `out:json;responseHandler:${callbackName}`,
+        cacheBust: String(Date.now()),
+      });
       const script = document.createElement("script");
-      const timeout = window.setTimeout(() => { cleanup(); reject(new Error("Prior-year sheet load timed out.")); }, 90000);
-      function cleanup() { window.clearTimeout(timeout); delete window[callbackName]; script.remove(); }
-      window[callbackName] = (payload) => { try { const rows = rowsFromPayload(payload); cleanup(); resolve(rows); } catch (error) { cleanup(); reject(error); } };
-      script.onerror = () => { cleanup(); reject(new Error("Prior-year sheet script failed to load.")); };
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Prior-year sheet load timed out."));
+      }, 90000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = (payload) => {
+        try {
+          const rows = rowsFromPayload(payload);
+          cleanup();
+          resolve(rows);
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("Prior-year sheet script failed to load."));
+      };
       script.src = `${GOOGLE_SHEET_GVIZ_URL}?${params.toString()}`;
       document.head.appendChild(script);
     });
   }
 
-  function filteredCurrentRows() { filterRows(); return state.filtered; }
+  function filteredCurrentRows() {
+    filterRows();
+    return state.filtered;
+  }
 
   function filteredPriorRows() {
     const period = $("periodFilter").value;
@@ -71,6 +101,7 @@
     const transfer = $("transferFilter").value;
     const query = $("searchInput").value.trim().toLowerCase();
     const selectedMonth = period ? Number(period.split("-")[1]) : null;
+
     return priorRows.filter((row) => {
       if (selectedMonth && row.month !== selectedMonth) return false;
       if (brand && row.brand !== brand) return false;
@@ -88,12 +119,16 @@
 
   function renderYoyAnalysis() {
     if (!priorRows.length || !state.all.length) return;
+
     const currentRows = filteredCurrentRows();
     const priorFiltered = filteredPriorRows();
     const selectedPeriod = $("periodFilter").value;
     const currentMonths = new Set(currentRows.map((row) => row.month).filter(Boolean));
-    const comparableMonths = selectedPeriod ? new Set([Number(selectedPeriod.split("-")[1])]) : currentMonths;
+    const comparableMonths = selectedPeriod
+      ? new Set([Number(selectedPeriod.split("-")[1])])
+      : currentMonths;
     const priorComparable = priorFiltered.filter((row) => comparableMonths.has(row.month));
+
     const currentAmount = sum(currentRows, "amount");
     const priorAmount = sum(priorComparable, "amount");
     const delta = currentAmount - priorAmount;
@@ -110,23 +145,33 @@
     const monthLabels = Array.from({ length: 12 }, (_, index) => index + 1);
     const currentByMonth = new Map(groupBy(currentRows, "month").map((item) => [Number(item.label), item.amount]));
     const priorByMonth = new Map(groupBy(priorFiltered, "month").map((item) => [Number(item.label), item.amount]));
+
     chart("yoyChart", "bar", {
       legend: true,
       data: {
-        labels: monthLabels.map((month) => `M${month}`),
+        labels: monthLabels.map((month) => `${month}\u6708`),
         datasets: [
           { label: "Current Sales", data: monthLabels.map((month) => currentByMonth.get(month) || 0), backgroundColor: "#2f80ed", borderRadius: 4 },
           { label: "Last Year Sales", data: monthLabels.map((month) => priorByMonth.get(month) || 0), backgroundColor: "#94a3b8", borderRadius: 4 },
         ],
       },
-      scales: { y: { ticks: { callback: money }, grid: { color: "#eef2f7" } }, x: { grid: { display: false } } },
+      scales: {
+        y: { ticks: { callback: money }, grid: { color: "#eef2f7" } },
+        x: { grid: { display: false } },
+      },
     });
   }
 
   const filters = ["periodFilter", "brandFilter", "categoryFilter", "channelFilter", "countryFilter", "transferFilter"];
   filters.forEach((id) => $(id).addEventListener("change", () => window.setTimeout(renderYoyAnalysis, 0)));
   $("searchInput").addEventListener("input", () => window.requestAnimationFrame(renderYoyAnalysis));
-  $("refreshBtn").addEventListener("click", () => { loadPriorRows().then((rows) => { priorRows = rows; renderYoyAnalysis(); }).catch(console.error); });
+  $("refreshBtn").addEventListener("click", () => {
+    loadPriorRows().then((rows) => {
+      priorRows = rows;
+      renderYoyAnalysis();
+    }).catch(console.error);
+  });
+
   loadPriorRows().then((rows) => {
     priorRows = rows;
     const waitForCurrent = window.setInterval(() => {
@@ -134,5 +179,8 @@
       window.clearInterval(waitForCurrent);
       renderYoyAnalysis();
     }, 250);
-  }).catch((error) => { console.error(error); $("yoyNote").textContent = "last year data failed to load"; });
+  }).catch((error) => {
+    console.error(error);
+    $("yoyNote").textContent = "last year data failed to load";
+  });
 })();
