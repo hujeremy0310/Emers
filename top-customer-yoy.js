@@ -1,5 +1,88 @@
 (function () {
+  const PRIOR_GID = "1573568113";
+  const QUERY = "select B,C,D,E,F,G,H,I,J,K,L,M,O,Q,R";
   const TOP_CUSTOMER_LIMIT = 20;
+  let priorRows = [];
+
+  function clean(value) {
+    const text = String(value ?? "").trim();
+    return text || "(blank)";
+  }
+
+  function toNumber(value) {
+    const cleaned = String(value ?? "").trim().replaceAll(",", "").replace("(", "-").replace(")", "");
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function cell(cells, index) {
+    const item = cells[index] || {};
+    if (item.v === null || item.v === undefined) return "";
+    return item.f ?? item.v;
+  }
+
+  function rowsFromPayload(payload) {
+    return payload.table.rows.map((item) => {
+      const cells = item.c || [];
+      const year = toNumber(cell(cells, 9));
+      const month = toNumber(cell(cells, 10));
+      return {
+        customer: clean(cell(cells, 0)),
+        productNo: clean(cell(cells, 1)),
+        productName: clean(cell(cells, 2)),
+        category: clean(cell(cells, 4)),
+        country: clean(cell(cells, 5)),
+        channel: clean(cell(cells, 6)),
+        brand: clean(cell(cells, 7)),
+        year,
+        month,
+        qty: toNumber(cell(cells, 11)),
+        amount: toNumber(cell(cells, 13)),
+        transfer: clean(cell(cells, 14)),
+      };
+    });
+  }
+
+  function loadPriorRows() {
+    return new Promise((resolve, reject) => {
+      const callbackName = `__customerYoyPrior_${Date.now()}_${Math.round(Math.random() * 100000)}`;
+      const params = new URLSearchParams({
+        gid: PRIOR_GID,
+        tq: QUERY,
+        tqx: `out:json;responseHandler:${callbackName}`,
+        cacheBust: String(Date.now()),
+      });
+      const script = document.createElement("script");
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Top Customers YoY prior-year load timed out."));
+      }, 90000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = (payload) => {
+        try {
+          const rows = rowsFromPayload(payload);
+          cleanup();
+          resolve(rows);
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("Top Customers YoY prior-year script failed to load."));
+      };
+      script.src = `${GOOGLE_SHEET_GVIZ_URL}?${params.toString()}`;
+      document.head.appendChild(script);
+    });
+  }
 
   function comparablePriorRows(currentRows, priorRows) {
     const selectedPeriod = $("periodFilter").value;
@@ -7,6 +90,31 @@
       ? new Set([Number(selectedPeriod.split("-")[1])])
       : new Set(currentRows.map((row) => row.month).filter(Boolean));
     return priorRows.filter((row) => months.has(row.month));
+  }
+
+  function filteredPriorRows() {
+    const period = $("periodFilter").value;
+    const brand = $("brandFilter").value;
+    const category = $("categoryFilter").value;
+    const channel = $("channelFilter").value;
+    const country = $("countryFilter").value;
+    const transfer = $("transferFilter").value;
+    const query = $("searchInput").value.trim().toLowerCase();
+    const selectedMonth = period ? Number(period.split("-")[1]) : null;
+
+    return priorRows.filter((row) => {
+      if (selectedMonth && row.month !== selectedMonth) return false;
+      if (brand && row.brand !== brand) return false;
+      if (category && row.category !== category) return false;
+      if (channel && row.channel !== channel) return false;
+      if (country && row.country !== country) return false;
+      if (transfer && row.transfer !== transfer) return false;
+      if (query) {
+        const haystack = `${row.customer} ${row.productNo} ${row.productName} ${row.brand}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
   }
 
   function groupCustomers(rows) {
@@ -55,9 +163,10 @@
     if (!$("customerYoyChart")) return;
 
     const currentRows = state.filtered || [];
-    const priorRows = comparablePriorRows(currentRows, state.priorFiltered || []);
+    const priorSource = priorRows.length ? filteredPriorRows() : (state.priorFiltered || []);
+    const priorComparableRows = comparablePriorRows(currentRows, priorSource);
     const currentByCustomer = groupCustomers(currentRows);
-    const priorByCustomer = groupCustomers(priorRows);
+    const priorByCustomer = groupCustomers(priorComparableRows);
     const topCustomers = [...currentByCustomer.values()].sort((a, b) => b.amount - a.amount).slice(0, TOP_CUSTOMER_LIMIT);
     const labels = topCustomers.map((item) => item.label).reverse();
     const currentSales = topCustomers.map((item) => item.amount).reverse();
@@ -71,7 +180,7 @@
       priorSales.reduce((total, value) => total + value, 0),
       topCustomers.length,
     );
-    $("customerYoyNote").textContent = `ranked by current sales, compared with ${number(priorRows.length)} last year rows`;
+    $("customerYoyNote").textContent = `ranked by current sales, compared with ${number(priorComparableRows.length)} last year rows`;
     $("customerYoyRates").innerHTML = growthRates.map((value) => `
       <div class="customerYoyRate ${rateClass(value)}">${formatRate(value)}</div>
     `).join("");
@@ -99,4 +208,12 @@
     originalRender(...args);
     renderTopCustomerYoy();
   };
+
+  loadPriorRows().then((rows) => {
+    priorRows = rows;
+    renderTopCustomerYoy();
+  }).catch((error) => {
+    console.error(error);
+    $("customerYoyNote").textContent = "last year customer data failed to load";
+  });
 })();
