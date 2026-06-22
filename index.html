@@ -209,6 +209,20 @@
       </article>
     </section>
 
+    <section class="panel customerYoyPanel">
+      <div class="panelHead">
+        <div>
+          <h2>Top Customers YoY</h2>
+          <p id="customerYoyNote">current top customers compared with last year</p>
+        </div>
+      </div>
+      <div class="customerYoySummary" id="customerYoySummary"></div>
+      <div class="customerYoyGrid">
+        <div class="chartBox customerYoyChartBox"><canvas id="customerYoyChart"></canvas></div>
+        <div class="customerYoyRates" id="customerYoyRates"></div>
+      </div>
+    </section>
+
     <section class="panel dataPanel">
       <div class="panelHead">
         <div>
@@ -234,5 +248,6 @@
   <script src="transfer-default.js?v=20260617-transfer-n-default"></script>
   <script src="tooltip-value-fix.js?v=20260616-yoy-percent"></script>
   <script src="yoy-analysis.js?v=20260616-yoy-percent"></script>
+  <script src="top-customer-yoy.js?v=20260622-customer-yoy"></script>
 </body>
 </html>
